@@ -8,6 +8,8 @@ export PATH=/sbin:/usr/sbin:/bin:/usr/bin
 
 [ -d /dev ] || mkdir -m 0755 /dev
 [ -d /root ] || mkdir -m 0700 /root
+[ -d /rooto ] || mkdir -m 0700 /rooto
+[ -d /root2 ] || mkdir -m 0700 /root2
 [ -d /sys ] || mkdir /sys
 [ -d /proc ] || mkdir /proc
 [ -d /tmp ] || mkdir /tmp
@@ -326,15 +328,42 @@ unset fastboot
 unset forcefsck
 unset fsckfix
 
+cd /
+mkdir /root3
+mount -t tmpfs none root3
+mount -t aufs -o noxino -o rw -o br:root3 none root2
+
+rootmnt=/root2
+
+# panic "Do your worst"
 # Move virtual filesystems over to the real filesystem
+mkdir ${rootmnt}/sys
+mkdir ${rootmnt}/proc
+mkdir ${rootmnt}/run
+mkdir ${rootmnt}/mnt
+mkdir ${rootmnt}/mnt/root
+mkdir ${rootmnt}/mnt/root/oldroot
+mkdir ${rootmnt}/dev
+
 mount -n -o move /sys ${rootmnt}/sys
 mount -n -o move /proc ${rootmnt}/proc
+mount -n -o move /root/run ${rootmnt}/run
+mount -n -o move /root/dev ${rootmnt}/dev
+mount -n -o move /root ${rootmnt}/mnt/root/oldroot
+mount -n -o move /root ${rootmnt}/mnt/root/oldroot3
 
+mount -t aufs -o remount,ro -o noxino -o append:/root2/mnt/root/oldroot none root2
+mount -o remount,rw none /root2
+mount -n -o move /root3 /root2/mnt/root/oldroot3/
+
+exec run-init ${drop_caps} ${rootmnt} ${init} "$@" <${rootmnt}/dev/console >${rootmnt}/dev/console
 # Chain to real filesystem
 if [ -z "$drop_caps" ] && command -v switch_root >/dev/null 2>&1; then
-	exec switch_root ${rootmnt} ${init} "$@" <${rootmnt}/dev/console >${rootmnt}/dev/console
+    pivot_root ${rootmnt} ${rootmnt}/mnt/root/oldroot
+    sleep 10;
+    cd /
+    exec ${init} "$@" <${rootmnt}/dev/console >${rootmnt}/dev/console
 elif command -v run-init >/dev/null 2>&1; then
-	exec run-init ${drop_caps} ${rootmnt} ${init} "$@" <${rootmnt}/dev/console >${rootmnt}/dev/console
 fi
 echo "Something went badly wrong in the initramfs."
 panic "Please file a bug on initramfs-tools."
