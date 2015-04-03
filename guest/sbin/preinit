@@ -1,0 +1,22 @@
+#!/bin/bash
+export MAC=$(printf "%02x" $((($RANDOM * 4 + 2) % 256)) $(($RANDOM%256)) $(($RANDOM%256)) $(($RANDOM%256)) $(($RANDOM%256)) $(($RANDOM%256)))
+export HOSTNAME="sivtar-$MAC"
+mount -n -o rw /mnt/9p
+
+mkdir /mnt/9p/$HOSTNAME
+mkdir /mnt/9p/$HOSTNAME/tmp
+mkdir /mnt/9p/$HOSTNAME/tmptmp
+mount -n -t tmpfs none /mnt/9p/$HOSTNAME/tmptmp
+mount -n -t aufs -o noplink -o rw -o xino=/mnt/9p/$HOSTNAME/tmptmp/.aufs.xino -o br:/mnt/9p/$HOSTNAME=rw+coo_all:/ aufs /newroot
+#mount -n -t aufs -o noplink -o rw -o noxino -o br:/mnt/9p/$HOSTNAME=rw+coo_all:/ aufs /newroot
+
+mount -n --move /run /newroot/run
+mount -n --move /dev /newroot/dev
+
+echo "$HOSTNAME" > /newroot/etc/hostname
+pivot_root /newroot /newroot/mnt/root/oldroot
+cd /
+
+touch /home/test/.aufs_okay
+
+exec /sbin/init "$@"
