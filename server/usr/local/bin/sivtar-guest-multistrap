@@ -1,0 +1,72 @@
+#!/bin/bash
+id=sivtar-$(TZ=GMT date '+%Y%m%dT%H%M%S.%NZ')
+sivtar=/home/pip/git/sivtar
+share=${sivtar}/guest/usr/local/share/sivtar
+# mkdir ${id}-sources
+# multistrap --source-dir ${id}-sources -d ${id} -f ${sivtar}/multistrap/multistrap.conf
+multistrap -d ${id} -f ${share}/multistrap/multistrap.conf
+mount --bind /dev ${id}/dev
+mkdir -p ${id}/var/lib/apt/lists
+cp -av /var/lib/apt/lists/* ${id}/var/lib/apt/lists
+mkdir -p ${id}/etc/apt/sources.list.d/
+cat <<EOF > ${id}/etc/apt/sources.list.d/local.list
+deb http://localhost:3142/ftp.debian.org/debian unstable main
+deb http://localhost:3142/ftp.debian.org/debian unstable non-free
+deb http://localhost:3142/ftp.debian.org/debian unstable contrib
+EOF
+
+chroot ${id} /bin/bash -x <<EOF
+mount -t proc proc proc
+mount -t sysfs sys sys
+mount -t tmpfs tmpfs /run
+mkdir /run/lock
+mount -t tmpfs tmpfs /run/lock
+
+dpkg-divert --package dash --divert /bin/sh.distrib --add /bin/sh
+dpkg-divert --package dash --divert /usr/share/man/man1/sh.distrib.1.gz --add /usr/share/man/man1/sh.1.gz
+
+DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
+LC_ALL=C LANGUAGE=C LANG=C dpkg --configure -a
+
+apt-get update
+apt-get install sysvinit
+apt-cache dumpavail | dpkg --merge-avail
+EOF
+
+cat ${share}/dpkg/selections | chroot ${id} dpkg --set-selections
+cat ${share}/chkconfig/list | chroot ${id} chkconfig -s
+cat ${share}/apt-mark/auto-marks | chroot ${id} xargs apt-mark auto
+
+chroot ${id} /bin/bash <<EOF
+apt-get -y -m dselect-upgrade
+DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
+LC_ALL=C LANGUAGE=C LANG=C dpkg --configure -a
+
+adduser --disabled-password sivtar < /dev/null
+passwd -d root
+passwd -d sivtar
+
+chown root.root -R /etc
+EOF
+
+# save configuration files which we overwrite
+(cd ${sivtar}/guest; tar -c .) | tar -t | egrep -v '\/$' | while read; do if [ -f "$REPLY" ]; then echo "$REPLY"; fi; done | (cd ${id}; tar -cT -) > ${id}-orig.tar
+(cd ${sivtar}/guest; tar -c .) | (cd ${id}; tar -x)
+
+chroot ${id} /bin/bash <<EOF
+mkdir /mnt/root
+mkdir /mnt/root/oldroot
+mkdir /mnt/root/oldroot2
+mkdir /mnt/root/oldroot3
+mkdir /mnt/newroot
+mkdir /mnt/roots
+mkdir /mnt/git
+mkdir /mnt/cpan
+mkdir /mnt/control
+umount -l /run
+umount -l /sys
+umount -l /proc
+umount -l /dev
+EOF
+
+# http://unix.stackexchange.com/questions/191662/how-do-i-replicate-installed-package-selections-from-one-debian-system-to-anothe
