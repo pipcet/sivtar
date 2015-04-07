@@ -1,0 +1,7 @@
+#!/bin/bash
+echo "Content-type: application/octet-stream"
+echo ""
+cd /srv/nfs/sivtar/boot/initdir-4.0.0-rc6
+find | cpio -o -H newc
+#cat /var/9p/qemu/boot/initrd.img-4.0.0-rc6
+exit 0
