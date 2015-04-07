@@ -1,0 +1,8 @@
+#!/bin/bash
+echo "Content-type: application/octet-stream"
+echo ""
+echo "#!ipxe"
+echo ":retry"
+echo "kernel http://sivtar-server/kernel break root=/dev/nfs nfsroot=auto init=/sbin/preinit || goto retry"
+echo "initrd http://sivtar-server/initrd || goto retry"
+echo "boot || goto retry"

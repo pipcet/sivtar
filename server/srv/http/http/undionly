@@ -1,0 +1,6 @@
+#!/bin/bash
+echo "Content-type: application/octet-stream"
+echo ""
+cat /srv/nfs/sivtar/boot/undionly.kpxe
+
+exit 0
