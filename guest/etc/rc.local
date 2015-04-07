@@ -12,6 +12,7 @@
 # By default this script does nothing.
 
 chmod 1777 /tmp
+hostname > /dev/tty1
 touch /mnt/control/$(hostname)
 
 exit 0
