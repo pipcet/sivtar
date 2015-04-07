@@ -1,0 +1,5 @@
+/dev/nfs / nfs auto,async,rw,noatime 0 1
+sivtar-server:/srv/nfs/roots /mnt/roots nfs noauto,async,rw 0 2
+sivtar-server:/srv/nfs/git /mnt/git nfs auto,async,ro,noatime 0 2
+sivtar-server:/srv/nfs/cpan /mnt/cpan nfs auto,async,ro,noatime 0 2
+sivtar-server:/srv/nfs/control /mnt/control nfs auto,sync,rw,noatime 0 2
