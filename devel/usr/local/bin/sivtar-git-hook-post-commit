@@ -1,0 +1,6 @@
+#!/bin/bash
+REV=$(git rev-parse HEAD)
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+REPO=$(git rev-parse --show-toplevel)
+RREPO=${REPO/#*git\//}
+echo $RREPO $BRANCH $REV > ~/sivtar/commits
