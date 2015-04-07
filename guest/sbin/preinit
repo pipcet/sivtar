@@ -1,20 +1,32 @@
 #!/bin/bash
 export MAC=$(printf "%02x" $((($RANDOM * 4 + 2) % 256)) $(($RANDOM%256)) $(($RANDOM%256)) $(($RANDOM%256)) $(($RANDOM%256)) $(($RANDOM%256)))
 export HOSTNAME="sivtar-$MAC"
-mount -n -o rw /mnt/9p
+mount -t proc proc /proc 2>/dev/null
 
-mkdir /mnt/9p/$HOSTNAME
-mkdir /mnt/9p/$HOSTNAME/tmp
-mkdir /mnt/9p/$HOSTNAME/tmptmp
-mount -n -t tmpfs none /mnt/9p/$HOSTNAME/tmptmp
-mount -n -t aufs -o noplink -o rw -o xino=/mnt/9p/$HOSTNAME/tmptmp/.aufs.xino -o br:/mnt/9p/$HOSTNAME=rw+coo_all:/ aufs /newroot
-#mount -n -t aufs -o noplink -o rw -o noxino -o br:/mnt/9p/$HOSTNAME=rw+coo_all:/ aufs /newroot
+rootmount=$(awk '{if($2=="/") { print $1 }}' /proc/mounts)
+server=${rootmount%%:*}
 
-mount -n --move /run /newroot/run
-mount -n --move /dev /newroot/dev
+echo rootmount ${rootmount} server ${server}
 
-echo "$HOSTNAME" > /newroot/etc/hostname
-pivot_root /newroot /newroot/mnt/root/oldroot
+#mount -t nfs -overs=3.0,nolock sivtar-server:/srv/nfs/sivtar /mnt/root/oldroot2
+mount -t nfs4 ${rootmount} /mnt/root/oldroot2
+mount -n --move /run /mnt/root/oldroot2/run
+mount -n --move /dev /mnt/root/oldroot2/dev
+pivot_root /mnt/root/oldroot2 /mnt/root/oldroot2/mnt/root/oldroot
+
+mount -n -o rw ${server}:/srv/nfs/roots /mnt/roots
+
+mkdir /mnt/roots/$HOSTNAME
+mkdir /mnt/roots/$HOSTNAME/tmp
+mkdir /mnt/roots/$HOSTNAME/tmptmp
+mount -n -t tmpfs none /mnt/roots/$HOSTNAME/tmptmp
+mount -n -t aufs -o rw -o xino=/mnt/roots/$HOSTNAME/tmptmp/.aufs.xino -o br:/mnt/roots/$HOSTNAME=rw+coo_all:/ aufs /mnt/newroot
+
+mount -n --move /run /mnt/newroot/run
+mount -n --move /dev /mnt/newroot/dev
+
+echo "$HOSTNAME" > /mnt/newroot/etc/hostname
+pivot_root /mnt/newroot /mnt/newroot/mnt/root/oldroot
 cd /
 
 touch /home/test/.aufs_okay
