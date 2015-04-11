@@ -2,20 +2,53 @@
 id=sivtar-$(TZ=GMT date '+%Y%m%dT%H%M%S.%NZ')
 sivtar=/home/pip/git/sivtar
 share=${sivtar}/guest/usr/local/share/sivtar
-# mkdir ${id}-sources
-# multistrap --source-dir ${id}-sources -d ${id} -f ${sivtar}/multistrap/multistrap.conf
-multistrap -d ${id} -f ${share}/multistrap/multistrap.conf
-mount --bind /dev ${id}/dev
-mkdir -p ${id}/var/lib/apt/lists
-cp -av /var/lib/apt/lists/* ${id}/var/lib/apt/lists
-mkdir -p ${id}/etc/apt/sources.list.d/
-cat <<EOF > ${id}/etc/apt/sources.list.d/local.list
-deb http://localhost:3142/ftp.debian.org/debian unstable main
-deb http://localhost:3142/ftp.debian.org/debian unstable non-free
-deb http://localhost:3142/ftp.debian.org/debian unstable contrib
+config=minimal.248
+apt_cacher_port=3142
+
+export LANG=C
+export DEBIAN_FRONTEND=noninteractive
+export DEBCONF_NONINTERACTIVE_SEEN=true
+
+multistrap -d ${id} -f /dev/stdin <<EOF
+[General]
+unpack=true
+noauth=true
+cleanup=true
+bootstrap=LocalDebian
+ignorenativearch=true
+
+[LocalDebian]
+packages=eatmydata
+packages=sudo
+packages=locales
+packages=apt-utils
+packages=dselect
+packages=dctrl-tools
+packages=aptitude
+packages=sysvinit
+packages=sysvinit-core
+packages=bash
+packages=adduser
+packages=aufs-tools
+packages=chkconfig
+source=http://ftp.debian.org/debian
+suite=sid
 EOF
 
-chroot ${id} /bin/bash -x <<EOF
+mount --bind /dev ${id}/dev
+mkdir -p ${id}/var/lib/apt/lists
+cp -a /var/lib/apt/lists/* ${id}/var/lib/apt/lists
+mkdir -p ${id}/etc/apt/sources.list.d/
+cat <<EOF > ${id}/etc/apt/apt.conf.d/80ac
+Acquire::http { Proxy "http://localhost:${apt_cacher_port}"; };
+EOF
+cat <<EOF > ${id}/etc/apt/sources.list.d/local.list
+deb http://ftp.debian.org/debian unstable main
+deb http://ftp.debian.org/debian unstable non-free
+deb http://ftp.debian.org/debian unstable contrib
+EOF
+
+chroot ${id} /bin/bash <<EOF
 mount -t proc proc proc
 mount -t sysfs sys sys
 mount -t tmpfs tmpfs /run
@@ -25,28 +58,27 @@ mount -t tmpfs tmpfs /run/lock
 dpkg-divert --package dash --divert /bin/sh.distrib --add /bin/sh
 dpkg-divert --package dash --divert /usr/share/man/man1/sh.distrib.1.gz --add /usr/share/man/man1/sh.1.gz
 
-DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
-LC_ALL=C LANGUAGE=C LANG=C dpkg --configure -a
+dpkg --configure -a
 
 apt-get update
 apt-get install sysvinit
 apt-cache dumpavail | dpkg --merge-avail
 EOF
 
-cat ${share}/dpkg/selections | chroot ${id} dpkg --set-selections
-cat ${share}/chkconfig/list | chroot ${id} chkconfig -s
-cat ${share}/apt-mark/auto-marks | chroot ${id} xargs apt-mark auto
+cat ${share}/${config}/dpkg/selections | chroot ${id} dpkg --set-selections
+cat ${share}/${config}/chkconfig/list | chroot ${id} chkconfig -s
+cat ${share}/${config}/apt-mark/automark | chroot ${id} xargs apt-mark auto
 
 chroot ${id} /bin/bash <<EOF
-apt-get -y -m dselect-upgrade
-DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
-LC_ALL=C LANGUAGE=C LANG=C dpkg --configure -a
+apt-get --force-yes -y -m dselect-upgrade
+dpkg --configure -a
 
 adduser --disabled-password sivtar < /dev/null
 passwd -d root
 passwd -d sivtar
 
-chown root.root -R /etc
+chown root.root -R /etc /sbin /usr
+chown root.root /home
 EOF
 
 # save configuration files which we overwrite
@@ -54,6 +86,7 @@ EOF
 (cd ${sivtar}/guest; tar -c .) | (cd ${id}; tar -x)
 
 chroot ${id} /bin/bash <<EOF
+mkdir /mnt/etc
 mkdir /mnt/root
 mkdir /mnt/root/oldroot
 mkdir /mnt/root/oldroot2
