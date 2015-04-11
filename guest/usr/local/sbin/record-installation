@@ -1,0 +1,44 @@
+#!/usr/bin/perl
+my $chkconfig = `chkconfig -t`;
+
+my %installed;
+for (split '\n', `dpkg --get-selections`) {
+    my ($pkg, $state) = split ' ', $_;
+
+    next if $state eq "deinstall";
+
+    $installed{$pkg} = $state;
+}
+for (split ' ', `apt-mark showauto`) {
+    $installed{$_} = "auto";
+}
+
+my $selections = "";
+my $automark = "";
+
+for my $pkg (sort keys %installed) {
+    my $state = $installed{$pkg};
+    if ($state ne "auto") {
+	$selections .= "$pkg $state\n";
+    } else {
+	$automark .= "$pkg\n";
+    }
+}
+
+my $dirname = "config." . scalar(keys %installed);
+system("mkdir $dirname");
+chdir($dirname);
+
+system("mkdir apt-mark chkconfig dpkg"); # XXX multistrap
+my $fh;
+open $fh, ">chkconfig/list" or die;
+print $fh $chkconfig;
+close $fh;
+
+open $fh, ">apt-mark/automark" or die;
+print $fh $automark;
+close $fh;
+
+open $fh, ">dpkg/selections" or die;
+print $fh $selections;
+close $fh;
