@@ -1,6 +1,6 @@
 #!/bin/bash
 echo "Content-type: application/octet-stream"
 echo ""
-cat /srv/nfs/sivtar/boot/vmlinuz-4.0.0-rc6-aufs-amd64
+cat /srv/nfs/sivtar/boot/vmlinuz-4.0.0-rc7-aufs-amd64
 
 exit 0
