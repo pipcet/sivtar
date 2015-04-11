@@ -3,18 +3,23 @@ export MAC=$(printf "%02x" $((($RANDOM * 4 + 2) % 256)) $(($RANDOM%256)) $(($RAN
 export HOSTNAME="sivtar-$MAC"
 mount -t proc proc /proc 2>/dev/null
 
-rootmount=$(awk '{if($2=="/") { print $1 }}' /proc/mounts)
+rootmount=$(awk '{ if($2=="/") print $1 }' /proc/mounts)
 server=${rootmount%%:*}
 
 echo rootmount ${rootmount} server ${server}
 
-#mount -t nfs -overs=3.0,nolock sivtar-server:/srv/nfs/sivtar /mnt/root/oldroot2
-mount -t nfs4 ${rootmount} /mnt/root/oldroot2
-mount -n --move /run /mnt/root/oldroot2/run
-mount -n --move /dev /mnt/root/oldroot2/dev
-pivot_root /mnt/root/oldroot2 /mnt/root/oldroot2/mnt/root/oldroot
+mount -t nfs4 ${rootmount} /mnt/newroot
+mount -n --move /run /mnt/newroot/run
+mount -n --move /dev /mnt/newroot/dev
+pivot_root /mnt/newroot /mnt/newroot/mnt/root/oldroot
 
-mount -n -o rw ${server}:/srv/nfs/roots /mnt/roots
+mount -n -t tmpfs none /mnt/etc
+mount -n -t aufs -o rw -o noxino -o br:/mnt/etc:/etc aufs /etc
+cat /etc/hosts > /etc/hosts2
+mv /etc/hosts2 /etc/hosts
+echo ${server} sivtar-server >> /etc/hosts
+mount -n /mnt/roots
+umount -n /etc
 
 mkdir /mnt/roots/$HOSTNAME
 mkdir /mnt/roots/$HOSTNAME/tmp
@@ -28,7 +33,5 @@ mount -n --move /dev /mnt/newroot/dev
 echo "$HOSTNAME" > /mnt/newroot/etc/hostname
 pivot_root /mnt/newroot /mnt/newroot/mnt/root/oldroot
 cd /
-
-touch /home/test/.aufs_okay
 
 exec /sbin/init "$@"
