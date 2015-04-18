@@ -5,6 +5,7 @@ share=${sivtar}/guest/usr/local/share/sivtar
 config=config.263
 apt_cacher_port=3142
 authorized_key=authorized_key
+debdir=/home/pip/sivtar-debs
 
 export LANG=C
 export DEBIAN_FRONTEND=noninteractive
@@ -80,9 +81,6 @@ dpkg --configure -a
 adduser --disabled-password sivtar < /dev/null
 passwd -d root
 passwd -d sivtar
-
-chown root.root -R /etc /sbin /usr
-chown root.root /home
 EOF
 
 # save configuration files which we overwrite
@@ -95,6 +93,13 @@ cat "${authorized_key}" > ${id}/root/.ssh/authorized_keys
 cat "${authorized_key}" > ${id}/home/sivtar/.ssh/authorized_keys
 
 chroot ${id} /bin/bash <<EOF
+chown root.root -R /etc /sbin /usr
+chown root.root /home
+chmod u+s /usr/bin/sudo
+chown sivtar.sivtar -R /home/sivtar
+EOF
+
+chroot ${id} /bin/bash <<EOF
 mkdir /mnt/etc
 mkdir /mnt/root
 mkdir /mnt/root/oldroot
@@ -105,6 +110,17 @@ mkdir /mnt/roots
 mkdir /mnt/git
 mkdir /mnt/cpan
 mkdir /mnt/control
+EOF
+
+cp "${debdir}"/*.deb ${id}/root
+
+chroot ${id} /bin/bash <<EOF
+dpkg -i ~/*.deb
+chmod a+x /usr/share/initramfs-tools/hooks/*
+update-initramfs -c -k 4.0.0
+EOF
+
+chroot ${id} /bin/bash <<EOF
 umount -l /run
 umount -l /sys
 umount -l /dev
