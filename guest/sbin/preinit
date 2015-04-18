@@ -6,6 +6,9 @@ mount -t proc proc /proc 2>/dev/null
 rootfstype=$(awk '{ if($2=="/") print $3 }' /proc/mounts)
 rootmount=$(awk '{ if($2=="/") print $1 }' /proc/mounts)
 server=${rootmount%%:*}
+if ip -4 -o addr show dev eth0|grep eth0; then
+    have_ipv4=1
+fi
 
 echo rootmount ${rootmount} server ${server}
 
@@ -15,11 +18,15 @@ mount -n --move /dev /mnt/newroot/dev
 pivot_root /mnt/newroot /mnt/newroot/mnt/root/oldroot
 
 mount -n -t tmpfs none /mnt/etc
+mount -n -t tmpfs none /var/lib/dhcp
 mount -n -t aufs -o rw -o noxino -o br:/mnt/etc:/etc aufs /etc
 cat /etc/hosts > /etc/hosts2
 cat /etc/fstab.${rootfstype} > /etc/fstab
 mv /etc/hosts2 /etc/hosts
 echo ${server} sivtar-server >> /etc/hosts
+if [ "$rootfstype" != "nfs" ]; then
+    dhclient -v -6
+fi
 mount -n /mnt/roots
 umount -n /etc
 
@@ -36,6 +43,12 @@ echo "$HOSTNAME" > /mnt/newroot/etc/hostname
 pivot_root /mnt/newroot /mnt/newroot/mnt/root/oldroot
 
 cat /etc/fstab.${rootfstype} > /etc/fstab
+
+echo auto eth0 > /etc/network/interfaces.d/eth0
+if [ -n "${have_ipv4}" ]; then
+    echo iface eth0 inet dhcp >> /etc/network/interfaces.d/eth0
+fi
+echo iface eth0 inet6 dhcp >> /etc/network/interfaces.d/eth0
 
 cd /
 
