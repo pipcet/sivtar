@@ -1,0 +1,5 @@
+sivtar-server:/srv/nfs/sivtar / 9p auto,async,rw,noatime,_netdev 0 1
+sivtar-server:/srv/nfs/roots /mnt/roots diod noauto,async,rw,_netdev 0 2
+sivtar-server:/srv/nfs/git /mnt/git diod auto,async,ro,noatime,_netdev 0 2
+sivtar-server:/srv/nfs/cpan /mnt/cpan diod auto,async,ro,noatime,_netdev 0 2
+sivtar-server:/srv/nfs/control /mnt/control diod auto,sync,rw,noatime,_netdev 0 2

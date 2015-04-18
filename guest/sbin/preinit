@@ -3,6 +3,7 @@ export MAC=$(printf "%02x" $((($RANDOM * 4 + 2) % 256)) $(($RANDOM%256)) $(($RAN
 export HOSTNAME="sivtar-$MAC"
 mount -t proc proc /proc 2>/dev/null
 
+rootfstype=$(awk '{ if($2=="/") print $3 }' /proc/mounts)
 rootmount=$(awk '{ if($2=="/") print $1 }' /proc/mounts)
 server=${rootmount%%:*}
 
@@ -16,6 +17,7 @@ pivot_root /mnt/newroot /mnt/newroot/mnt/root/oldroot
 mount -n -t tmpfs none /mnt/etc
 mount -n -t aufs -o rw -o noxino -o br:/mnt/etc:/etc aufs /etc
 cat /etc/hosts > /etc/hosts2
+cat /etc/fstab.${rootfstype} > /etc/fstab
 mv /etc/hosts2 /etc/hosts
 echo ${server} sivtar-server >> /etc/hosts
 mount -n /mnt/roots
@@ -32,6 +34,9 @@ mount -n --move /dev /mnt/newroot/dev
 
 echo "$HOSTNAME" > /mnt/newroot/etc/hostname
 pivot_root /mnt/newroot /mnt/newroot/mnt/root/oldroot
+
+cat /etc/fstab.${rootfstype} > /etc/fstab
+
 cd /
 
 exec /sbin/init "$@"
