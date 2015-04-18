@@ -2,7 +2,7 @@
 id=sivtar-$(TZ=GMT date '+%Y%m%dT%H%M%S.%NZ')
 sivtar=/home/pip/git/sivtar
 share=${sivtar}/guest/usr/local/share/sivtar
-config=minimal.248
+config=config.263
 apt_cacher_port=3142
 authorized_key=authorized_key
 
