@@ -12,10 +12,13 @@ fi
 
 echo rootmount ${rootmount} server ${server}
 
-mount -t nfs4 ${rootmount} /mnt/newroot
-mount -n --move /run /mnt/newroot/run
-mount -n --move /dev /mnt/newroot/dev
-pivot_root /mnt/newroot /mnt/newroot/mnt/root/oldroot
+# remount as nfs4 rather than nfs3
+if [ "$rootfstype" == "nfs" ]; then
+    mount -t nfs4 ${rootmount} /mnt/newroot
+    mount -n --move /run /mnt/newroot/run
+    mount -n --move /dev /mnt/newroot/dev
+    pivot_root /mnt/newroot /mnt/newroot/mnt/root/oldroot
+fi
 
 mount -n -t tmpfs none /mnt/etc
 mount -n -t tmpfs none /var/lib/dhcp
