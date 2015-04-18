@@ -4,6 +4,7 @@ sivtar=/home/pip/git/sivtar
 share=${sivtar}/guest/usr/local/share/sivtar
 config=minimal.248
 apt_cacher_port=3142
+authorized_key=authorized_key
 
 export LANG=C
 export DEBIAN_FRONTEND=noninteractive
@@ -87,6 +88,11 @@ EOF
 # save configuration files which we overwrite
 (cd ${sivtar}/guest; tar -c .) | tar -t | egrep -v '\/$' | while read; do if [ -f "$REPLY" ]; then echo "$REPLY"; fi; done | (cd ${id}; tar -cT -) > ${id}-orig.tar
 (cd ${sivtar}/guest; tar -c .) | (cd ${id}; tar -x)
+
+mkdir -p ${id}/root/.ssh
+mkdir -p ${id}/home/sivtar/.ssh
+cat "${authorized_key}" > ${id}/root/.ssh/authorized_keys
+cat "${authorized_key}" > ${id}/home/sivtar/.ssh/authorized_keys
 
 chroot ${id} /bin/bash <<EOF
 mkdir /mnt/etc
