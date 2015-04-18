@@ -107,8 +107,8 @@ mkdir /mnt/cpan
 mkdir /mnt/control
 umount -l /run
 umount -l /sys
-umount -l /proc
 umount -l /dev
+umount -l /proc
 EOF
 
 # http://unix.stackexchange.com/questions/191662/how-do-i-replicate-installed-package-selections-from-one-debian-system-to-anothe
