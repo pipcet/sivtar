@@ -53,11 +53,11 @@ sub vm_handler {
 
     warn "line $line";
 
-    return if $line =~ /[^-\/a-zA-Z0-9_ ]/;
+    return if $line =~ /[^-\/a-zA-Z0-9_ :]/;
 
     warn "line $line";
 
-    if ($line =~ /^control\/ (CREATE|OPEN) (sivtar-[0-9a-f]*)$/) {
+    if ($line =~ /^control\/ (CREATE|OPEN) ([0-9a-f:]*)$/) {
 	my ($vm) = $2;
 
 	push @vms, $vm;
@@ -79,7 +79,7 @@ sub get_vm {
 
 	    warn "trying vm $vm";
 	    if (run(["rm", "-f", "control/$vm"], '2>', \$err) &&
-		run(["ping", "-c", "1", "$vm"])) {
+		run(["ping6", "-c", "1", "$vm"])) {
 		warn "picked vm $vm";
 
 		return $vm;
