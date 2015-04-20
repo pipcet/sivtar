@@ -52,7 +52,7 @@ echo auto eth0 > /etc/network/interfaces.d/eth0
 if [ -n "${have_ipv4}" ]; then
     echo iface eth0 inet dhcp >> /etc/network/interfaces.d/eth0
 fi
-echo iface eth0 inet6 dhcp >> /etc/network/interfaces.d/eth0
+echo iface eth0 inet6 manual >> /etc/network/interfaces.d/eth0
 
 cd /
 
