@@ -10,6 +10,18 @@ debdir=/home/pip/sivtar-debs
 export LANG=C
 export DEBIAN_FRONTEND=noninteractive
 export DEBCONF_NONINTERACTIVE_SEEN=true
+# sigh. multistrap calls "apt-get -o Dir::Etc=...", but that doesn't
+# do anything, since APT parses the command line AFTER reading the etc
+# dir.  The only way to get it to read a different etc dir appears to
+# be to create a temporary file containing a "Dir::Etc "...";"
+# directive and setting that in the APT_CONFIG environment variable.
+
+mkdir -p ${id}/tmp/multistrap
+cat <<EOF > ${id}/tmp/multistrap/apt.conf
+Dir::Etc "$(pwd)/${id}/etc/apt/";
+Dir::Etc::Parts "$(pwd)/${id}/etc/apt/apt.conf.d/";
+Dir::Etc::PreferencesParts "$(pwd)/${id}/etc/apt/preferences.d/";
+EOF
 
 mkdir -p ${id}/var/lib/apt/lists
 cp -av /var/lib/apt/lists/* ${id}/var/lib/apt/lists
