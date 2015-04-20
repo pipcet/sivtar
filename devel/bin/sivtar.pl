@@ -137,7 +137,8 @@ sub build_scripts {
 	for my $env (@$environments) {
 	    $env = "export $env; " if $env ne "";
 	    my $script = <<"EOF";
-(git clone --branch "$branch" /mnt/git/"$repo" "$repo" &&
+(mkdir -p "$repo" &&
+git clone --branch "$branch" /mnt/git/"$repo" "$repo" &&
 cd "$repo" &&
 git checkout "$revision" &&
 ($env $inner) &&
