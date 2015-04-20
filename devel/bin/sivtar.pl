@@ -142,7 +142,7 @@ cd "$repo" &&
 git checkout "$revision" &&
 ($env $inner) &&
 rm -rf "$repo"
-)2>&1 |sudo tee /dev/tty1
+)2>&1 |sudo tee /dev/console
 EOF
 	    warn $script;
 	    push @scripts, $script;
