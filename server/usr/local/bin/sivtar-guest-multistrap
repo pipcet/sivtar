@@ -129,6 +129,7 @@ cp "${debdir}"/*.deb ${id}/root
 chroot ${id} /bin/bash <<EOF
 dpkg -i ~/*.deb
 chmod a+x /usr/share/initramfs-tools/hooks/*
+chmod a+r /boot/vmlinuz-*
 update-initramfs -c -k 4.0.0
 EOF
 
