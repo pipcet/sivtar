@@ -95,8 +95,8 @@ passwd -d root
 passwd -d sivtar
 EOF
 
-# save configuration files which we overwrite
-(cd ${sivtar}/guest; tar -c .) | tar -t | egrep -v '\/$' | while read; do if [ -f "$REPLY" ]; then echo "$REPLY"; fi; done | (cd ${id}; tar -cT -) > ${id}-orig.tar
+# save configuration files which we overwrite. skip this for now.
+# (cd ${sivtar}/guest; tar -c .) | tar -t | egrep -v '\/$' | while read; do if [ -f "$REPLY" ]; then echo "$REPLY"; fi; done | (cd ${id}; tar -cT -) > ${id}-orig.tar
 (cd ${sivtar}/guest; tar -c .) | (cd ${id}; tar -x)
 
 mkdir -p ${id}/root/.ssh
