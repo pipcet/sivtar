@@ -113,7 +113,7 @@ sub get_yaml {
     my $script = <<"EOF";
 (cd /mnt/git/"$repo"; git show "$revision":.sivtar.yml || git show "$revision":.travis.yml)
 EOF
-    my @ssh_cmd = ("ssh", "-o", "StrictHostKeyChecking=no", "-l", "test", "$vm", "/bin/bash");
+    my @ssh_cmd = ("ssh", "-o", "StrictHostKeyChecking=no", "-l", "sivtar", "$vm", "/bin/bash");
 
     run(\@ssh_cmd, '<', \$script, '>', \$yaml_src, '2>', \$err);
 
@@ -154,7 +154,7 @@ EOF
 
 sub shutdown_vm {
     my ($vm) = @_;
-    my @ssh_cmd = ("ssh", "-o", "StrictHostKeyChecking=no", "-l", "test", "$vm", "/bin/bash");
+    my @ssh_cmd = ("ssh", "-o", "StrictHostKeyChecking=no", "-l", "sivtar", "$vm", "/bin/bash");
 
     my $script = <<"EOF";
 (sleep 2; sudo halt -d -p -f) </dev/null >/dev/null 2>/dev/null &
@@ -176,7 +176,7 @@ sub launch_sivtar {
 
     my ($vm, $repo, $branch, $revision, $script) = @_;
 
-    my @ssh_cmd = ("ssh", "-o", "StrictHostKeyChecking=no", "-l", "test", "$vm", "/bin/bash");
+    my @ssh_cmd = ("ssh", "-o", "StrictHostKeyChecking=no", "-l", "sivtar", "$vm", "/bin/bash");
     run(\@ssh_cmd, '<', \$script);
 
     shutdown_vm($vm);
