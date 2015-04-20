@@ -13,6 +13,8 @@
 
 chmod 1777 /tmp
 hostname > /dev/console
-touch /mnt/control/$(hostname)
+ip=$(ip -o -6 addr show dev eth0 scope global | awk '{ print $4 }')
+ip=${ip%%/*}
+touch /mnt/control/${ip}
 
 exit 0
