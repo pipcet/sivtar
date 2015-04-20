@@ -26,7 +26,24 @@ EOF
 mkdir -p ${id}/var/lib/apt/lists
 cp -av /var/lib/apt/lists/* ${id}/var/lib/apt/lists
 
-multistrap -d ${id} -f /dev/stdin <<EOF
+mkdir -p ${id}/etc/apt/apt.conf.d
+cat <<EOF > ${id}/etc/apt/apt.conf.d/80ac
+Acquire::http { Proxy "http://localhost:${apt_cacher_port}"; };
+EOF
+
+cat <<EOF > ${id}/etc/apt/apt.conf.d/defaults
+Debug::Acquire { http "true"; };
+Acquire::PDiffs { SizeLimit "0"; };
+EOF
+
+mkdir -p ${id}/etc/apt/sources.list.d/
+cat <<EOF > ${id}/etc/apt/sources.list.d/local.list
+deb http://ftp.debian.org/debian unstable main
+deb http://ftp.debian.org/debian unstable non-free
+deb http://ftp.debian.org/debian unstable contrib
+EOF
+
+APT_CONFIG="${id}/tmp/multistrap/apt.conf" multistrap -d ${id} -f /dev/stdin <<EOF
 [General]
 unpack=true
 noauth=true
