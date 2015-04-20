@@ -43,6 +43,8 @@ mount -n -t aufs -o rw -o xino=/mnt/roots/$HOSTNAME/tmptmp/.aufs.xino -o br:/mnt
 mount -n --move /run /mnt/newroot/run
 mount -n --move /dev /mnt/newroot/dev
 
+(cat /mnt/newroot/etc/hosts; echo "${ip} ${HOSTNAME}") > /mnt/newroot/etc/hosts.new
+mv /mnt/newroot/etc/hosts.new /mnt/newroot/etc/hosts
 echo "$HOSTNAME" > /mnt/newroot/etc/hostname
 pivot_root /mnt/newroot /mnt/newroot/mnt/root/oldroot
 
